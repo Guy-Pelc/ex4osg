@@ -11,6 +11,19 @@ using namespace std;
 #include <cassert>
 
 void test(){
+	word_t val;
+	// VMwrite(7,7);
+	for (int i=0;i<VIRTUAL_MEMORY_SIZE;++i){
+		VMwrite(i,i);
+	}
+	
+	printPhysical();
+	
+	VMread(0,&val);
+	printPhysical();
+	
+}
+void test6(){
 	VMwrite(0,13);
 	VMwrite(3,17);
 

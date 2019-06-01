@@ -10,11 +10,12 @@ void printPhysical(){
 			PMread(i,&val);
 			cout<<"RAM["<<i<<"]="<<val<<endl;}
 	}
+
 //translates frame to base address of frame.
 //assumes depth is 1
 word_t frameToAddress(word_t frame){
 	cout<<"frame "<<frame<<" to base page address ";
-	word_t basePageAddress = frame*2;
+	word_t basePageAddress = frame*PAGE_SIZE;
 	cout<<basePageAddress<<endl;
 	return basePageAddress;
 }
@@ -40,7 +41,7 @@ int getPageToEvict(word_t &pageToEvict, word_t &pageFrameNumber){
 	word_t val;
 	//fill table with values.
 	//ASSUMES ONLY ROOM FOR ONE PAGE IN MEMORY
-	for (int i = 0; i<2; ++i){
+	for (int i = 0; i<PAGE_SIZE; ++i){
 		PMread(i,&val);
 		if (val != 0) {
 			pageFrameNumber = val;
@@ -64,7 +65,7 @@ word_t getMaxUsedFrame(){
 	word_t curTableAddr = 0;
 	word_t maxFrame = 0;
 	word_t compFrame;
-	for (int i=0;i<2;++i){
+	for (int i=0;i<PAGE_SIZE;++i){
 		PMread(curTableAddr+i,&compFrame);
 		if(compFrame>maxFrame){maxFrame=compFrame;}
 	}
@@ -80,8 +81,8 @@ int VMtranslateAddress(uint64_t virtualAddress,uint64_t *physicalAddress){
 
 	//split offset and page address:
 	//later split to (tableAddres)*,pageAddress,offset
-	word_t offset = virtualAddress%2;
-	word_t pageNumber = virtualAddress/2;
+	word_t offset = virtualAddress%PAGE_SIZE;
+	word_t pageNumber = virtualAddress/PAGE_SIZE;
 	word_t pageFrameNumber;
 	
 	word_t emptyFrame;
