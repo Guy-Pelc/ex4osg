@@ -10,7 +10,28 @@ using namespace std;
 #include <cstdio>
 #include <cassert>
 
+//test getMaxUsedFrame
+void test11(){
+	VMwrite(0,13);
+	printPhysical();
+}
+void test8(){
+	PMwrite(0,1);
+	// PMwrite()
+	PMwrite(3,2);
+	PMwrite(5,13);
+	cout<<getMaxUsedFrame()<<endl;
+
+	printPhysical();
+}
+
 void test(){
+	for (int i=0;i<VIRTUAL_MEMORY_SIZE;++i){
+	VMwrite(i,i);
+	}
+	printPhysical();
+}
+void test7(){
 	word_t val;
 	// VMwrite(7,7);
 	for (int i=0;i<VIRTUAL_MEMORY_SIZE;++i){

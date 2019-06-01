@@ -9,6 +9,8 @@ void printPhysical(){
 	for (uint64_t i=0; i<RAM_SIZE; ++i){
 			PMread(i,&val);
 			cout<<"RAM["<<i<<"]="<<val<<endl;}
+	cout<<endl;
+
 	}
 
 //translates frame to base address of frame.
@@ -20,6 +22,7 @@ word_t frameToAddress(word_t frame){
 	return basePageAddress;
 }
 void clearTable(uint64_t frameIndex) {
+	cout<<"clearTable: "<<frameIndex<<endl;
     for (uint64_t i = 0; i < PAGE_SIZE; ++i) {
         PMwrite(frameIndex * PAGE_SIZE + i, 0);
     }
@@ -60,14 +63,25 @@ int getPageToEvict(word_t &pageToEvict, word_t &pageFrameNumber){
 	return 0;
 }
 
+//fix for depth 2!!
 word_t getMaxUsedFrame(){
 	cout<<"getMaxUsedFrame..."<<endl;
 	word_t curTableAddr = 0;
 	word_t maxFrame = 0;
 	word_t compFrame;
+	word_t compFramelvl2;
+	//first depth table
 	for (int i=0;i<PAGE_SIZE;++i){
 		PMread(curTableAddr+i,&compFrame);
-		if(compFrame>maxFrame){maxFrame=compFrame;}
+		if (compFrame!=0){
+			if(compFrame>maxFrame){maxFrame=compFrame;}	
+			// second depth table	
+			for (int j = 0;j<PAGE_SIZE;++j){
+				PMread(frameToAddress(compFrame)+j,&compFramelvl2);
+				if(compFramelvl2>maxFrame){maxFrame=compFramelvl2;}		
+			}
+		}
+		
 	}
 	cout<<"..."<<maxFrame<<endl;
 	return maxFrame;
@@ -81,18 +95,46 @@ int VMtranslateAddress(uint64_t virtualAddress,uint64_t *physicalAddress){
 
 	//split offset and page address:
 	//later split to (tableAddres)*,pageAddress,offset
-	word_t offset = virtualAddress%PAGE_SIZE;
-	word_t pageNumber = virtualAddress/PAGE_SIZE;
-	word_t pageFrameNumber;
+	word_t offset = virtualAddress % PAGE_SIZE;
+	word_t pageNumber = virtualAddress / PAGE_SIZE;
 	
+	word_t pageFrameNumber;
 	word_t emptyFrame;
 
+	word_t table1to2Index = pageNumber / PAGE_SIZE;
+	word_t table2toPageIndex = pageNumber % PAGE_SIZE;
 
-	PMread(pageNumber,&pageFrameNumber); //reads frame number of page 0
+
+	word_t table2FrameNumber;
+
+	//get table1to2FrameNumber:
+
+	PMread(0+table1to2Index,&table2FrameNumber); // base of table1 is always zero
+	cout<<table1to2Index<<","<<table2FrameNumber<<endl;
+	if (table2FrameNumber == 0){
+		cout<<"PAGE FAULT - TABLE NOT IN RAM. searching for empty frame"<<endl;
+		emptyFrame =1 + getMaxUsedFrame();
+		// clear frame - only for tables.
+		clearTable(emptyFrame);
+
+		table2FrameNumber = emptyFrame;
+		PMwrite(table1to2Index,table2FrameNumber);
+	}
+
+	word_t table2Address = frameToAddress(table2FrameNumber);
+
+
+	//get pageFrameNumber:
+	PMread(table2Address+table2toPageIndex,&pageFrameNumber); 
+	cout<<table2Address+table2toPageIndex<<","<<pageFrameNumber<<endl;
+
 	if (pageFrameNumber==0){
 		cout<<"PAGE FAULT - PAGE NOT IN RAM. searching for empty frame"<<endl;
 
 		emptyFrame =1 + getMaxUsedFrame();
+
+
+		/* ASSUMING RAM IS INFINITE
 		if (emptyFrame==NUM_FRAMES){
 			cout<<"NO EMPTY FRAME. choosing victim and releasing frame"<<endl;
 			word_t pageToEvict;
@@ -106,9 +148,10 @@ int VMtranslateAddress(uint64_t virtualAddress,uint64_t *physicalAddress){
 		}
 		//restore page and link to table
 		PMrestore(emptyFrame, pageNumber);
+		*/
 		pageFrameNumber = emptyFrame;
 
-		PMwrite(pageNumber,pageFrameNumber);
+		PMwrite(table2Address+table2toPageIndex,pageFrameNumber);
 	}
 
 	word_t pageAddress = frameToAddress(pageFrameNumber);
@@ -156,5 +199,8 @@ int VMwrite(uint64_t virtualAddress, word_t value) {
 
 
 		cout<<"..."<<value<<endl<<endl;
+
+		printPhysical();
+
     return 1;
 }

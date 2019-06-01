@@ -4,6 +4,8 @@ notes
 
 do i need to check corner case vm size == offset size? then table depth is 0 and then what...?
 
+
+corner case - physical address must have at least 2 frames. else what?
 ---------------------
 
 
