@@ -10,16 +10,32 @@ using namespace std;
 #include <cstdio>
 #include <cassert>
 
-void printPhysical(){
-	word_t val;
-	for (uint64_t i=0; i<RAM_SIZE; ++i){
-			PMread(i,&val);
-			cout<<"RAM["<<i<<"]="<<val<<endl;}
-	}
-//tests getMaxUsedFrame
 void test(){
 	VMwrite(0,13);
-	VMwrite(2,17);
+	VMwrite(3,17);
+
+	printPhysical();
+
+	word_t val;
+	VMread(0,&val);
+	printPhysical();
+
+	VMread(2,&val);
+	printPhysical();
+}
+
+
+//tests getPageToEvict
+void test5(){
+	VMwrite(0,13);
+	word_t pageToEvict;
+	word_t frameOfPageToEvict;
+	getPageToEvict(pageToEvict,frameOfPageToEvict);
+}
+//tests getMaxUsedFrame
+void test4(){
+	VMwrite(0,13);
+	VMwrite(3,17);
 	// PMwrite(1,2);
 	cout<<endl;
 	

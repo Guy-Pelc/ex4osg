@@ -1,7 +1,9 @@
 #pragma once
 
 #include "MemoryConstants.h"
-
+word_t getMaxUsedFrame();
+int getPageToEvict(word_t &pageToEvict, word_t &pageFrameNumber);
+void printPhysical();
 /*
  * Initialize the virtual memory
  */

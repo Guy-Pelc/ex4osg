@@ -2,7 +2,7 @@
 
 #include "MemoryConstants.h"
 
-word_t getMaxUsedFrame();
+
 
 /*
  * reads an integer from the given physical address and puts it in 'value'

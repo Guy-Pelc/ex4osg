@@ -4,6 +4,12 @@
 #include <iostream>
 using namespace std;
 
+void printPhysical(){
+	word_t val;
+	for (uint64_t i=0; i<RAM_SIZE; ++i){
+			PMread(i,&val);
+			cout<<"RAM["<<i<<"]="<<val<<endl;}
+	}
 //translates frame to base address of frame.
 //assumes depth is 1
 word_t frameToAddress(word_t frame){
@@ -25,6 +31,33 @@ void VMinitialize() {
     clearTable(0);
     cout<<"end init\n"<<endl;
 }
+//assumes lvl 1 depth - evicting page and not empty table.
+int getPageToEvict(word_t &pageToEvict, word_t &pageFrameNumber){
+	cout<<"getPageToEvict..."<<endl;
+
+	pageToEvict = -1;
+	
+	word_t val;
+	//fill table with values.
+	//ASSUMES ONLY ROOM FOR ONE PAGE IN MEMORY
+	for (int i = 0; i<2; ++i){
+		PMread(i,&val);
+		if (val != 0) {
+			pageFrameNumber = val;
+			pageToEvict = i;
+			// cout<<"pageFrameNumber:"<<pageFrameNumber<<endl;			
+		}
+	}
+
+	if (pageToEvict==-1){
+		cout<<"error! no page in ram"<<endl;
+		return -1;
+	}
+				// cout<<"pageFrameNumber:"<<pageFrameNumber<<endl;			
+
+	cout<<"..."<<pageToEvict<<" at frame "<<pageFrameNumber<<endl;
+	return 0;
+}
 
 word_t getMaxUsedFrame(){
 	cout<<"getMaxUsedFrame..."<<endl;
@@ -38,27 +71,8 @@ word_t getMaxUsedFrame(){
 	cout<<"..."<<maxFrame<<endl;
 	return maxFrame;
 }
-/** BASE FOR MORE THAN 1 LVL DEPTH
-word_t getMaxUsedFrame(){
-	word_t maxFrame = 0;
-	_getMaxUsedFrame(0,maxFrame);
-	return maxFrame;
-}
 
-word_t _getMaxUsedFrame(word_t curFrame, $maxFrame){
-	word_t nextFrame;
-	for (int i=0;i<2;++i){
-		PMread(curFrame,&val);	
-		if (val!=0){
-			_getMaxUsedFrame(val,)
-		}
-	}
-	
-	if val()
 
-	return 0;
-}
-*/
 int VMtranslateAddress(uint64_t virtualAddress,uint64_t *physicalAddress){
 	cout<<"VMtranslateAddress "<<virtualAddress<<"..."<<endl;
 
@@ -71,10 +85,24 @@ int VMtranslateAddress(uint64_t virtualAddress,uint64_t *physicalAddress){
 	word_t pageFrameNumber;
 	
 	word_t emptyFrame;
+
+
 	PMread(pageNumber,&pageFrameNumber); //reads frame number of page 0
 	if (pageFrameNumber==0){
 		cout<<"PAGE FAULT - PAGE NOT IN RAM. searching for empty frame"<<endl;
+
 		emptyFrame =1 + getMaxUsedFrame();
+		if (emptyFrame==NUM_FRAMES){
+			cout<<"NO EMPTY FRAME. choosing victim and releasing frame"<<endl;
+			word_t pageToEvict;
+			word_t frameOfPageToEvict;
+			getPageToEvict(pageToEvict,frameOfPageToEvict);
+			PMevict(frameOfPageToEvict,pageToEvict);
+			//unlink from table
+			PMwrite(pageToEvict,0);
+
+			emptyFrame = frameOfPageToEvict;
+		}
 		//restore page and link to table
 		PMrestore(emptyFrame, pageNumber);
 		pageFrameNumber = emptyFrame;

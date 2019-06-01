@@ -20,12 +20,12 @@ void initialize() {
 void PMread(uint64_t physicalAddress, word_t* value) {
     if (RAM.empty())
         initialize();
-    cout<<"pm read "<<physicalAddress<<",";
+    // cout<<"pm read "<<physicalAddress<<",";
     assert(physicalAddress < RAM_SIZE);
 
     *value = RAM[physicalAddress / PAGE_SIZE][physicalAddress
              % PAGE_SIZE];
-    cout<<*value<<endl;
+    // cout<<*value<<endl;
  }
 
 void PMwrite(uint64_t physicalAddress, word_t value) {
