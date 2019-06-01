@@ -16,9 +16,9 @@ void printPhysical(){
 //translates frame to base address of frame.
 //assumes depth is 1
 word_t frameToAddress(word_t frame){
-	cout<<"frame "<<frame<<" to base page address ";
+	// cout<<"frame "<<frame<<" to base page address ";
 	word_t basePageAddress = frame*PAGE_SIZE;
-	cout<<basePageAddress<<endl;
+	// cout<<basePageAddress<<endl;
 	return basePageAddress;
 }
 void clearTable(uint64_t frameIndex) {
@@ -35,31 +35,72 @@ void VMinitialize() {
     clearTable(0);
     cout<<"end init\n"<<endl;
 }
-//assumes lvl 1 depth - evicting page and not empty table.
-int getPageToEvict(word_t &pageToEvict, word_t &pageFrameNumber){
+//assumes no empty tables.
+int getPageToEvict(	word_t &emptyFrame,word_t &protectedTableFrameNumber){
 	cout<<"getPageToEvict..."<<endl;
+	printPhysical();
 
-	pageToEvict = -1;
+	bool isEmptyTable;
+
+	word_t pageToEvictFrameNumber;
+	word_t addressToPtrOfPageToEvict;
+	word_t pageToEvict = -1;
 	
-	word_t val;
-	//fill table with values.
+	word_t table2FrameNumber;
+	word_t pageFrameNumber;
+	word_t table2Address;
 	//ASSUMES ONLY ROOM FOR ONE PAGE IN MEMORY
+	//first level
 	for (int i = 0; i<PAGE_SIZE; ++i){
-		PMread(i,&val);
-		if (val != 0) {
-			pageFrameNumber = val;
-			pageToEvict = i;
-			// cout<<"pageFrameNumber:"<<pageFrameNumber<<endl;			
+		PMread(i,&table2FrameNumber);
+		if (table2FrameNumber != 0) {
+			isEmptyTable = true;
+
+			//second level:
+			for (int j =0; j<PAGE_SIZE;++j){
+
+				table2Address = frameToAddress(table2FrameNumber);
+				PMread(j+table2Address,&pageFrameNumber);
+				//exists frame with page:
+				if (pageFrameNumber!=0){
+					cout<<"found page to evict:"<<pageFrameNumber<<endl;
+					isEmptyTable = false;
+					addressToPtrOfPageToEvict = j+table2Address;
+					pageToEvictFrameNumber = pageFrameNumber;
+					pageToEvict = i*PAGE_SIZE+j;
+
+				}
+			}
+			//evict table if empty (prefer over evict page)
+			if (isEmptyTable==true){
+				if (table2FrameNumber == protectedTableFrameNumber){
+					cout<<"move on"<<endl;
+					continue;
+				}
+				cout<<"protectedTableFrameNumber:"<<protectedTableFrameNumber<<endl;
+				cout<<"table2FrameNumber:"<<table2FrameNumber<<endl;
+				// cout<<"here"<<endl;
+				//unlink table:
+				PMwrite(i,0);
+				// set return value
+				emptyFrame = table2FrameNumber;
+				cout<<"found empty table"<<endl;
+				return 0;
+			}
 		}
 	}
+	PMevict(pageToEvictFrameNumber,pageToEvict);
+	//unlink from table
+	PMwrite(addressToPtrOfPageToEvict,0);
 
+	emptyFrame = pageToEvictFrameNumber;
 	if (pageToEvict==-1){
 		cout<<"error! no page in ram"<<endl;
 		return -1;
 	}
 				// cout<<"pageFrameNumber:"<<pageFrameNumber<<endl;			
 
-	cout<<"..."<<pageToEvict<<" at frame "<<pageFrameNumber<<endl;
+	cout<<"..."<<pageToEvict<<" at frame "<<pageToEvictFrameNumber<<endl;
 	return 0;
 }
 
@@ -134,21 +175,15 @@ int VMtranslateAddress(uint64_t virtualAddress,uint64_t *physicalAddress){
 		emptyFrame =1 + getMaxUsedFrame();
 
 
-		/* ASSUMING RAM IS INFINITE
 		if (emptyFrame==NUM_FRAMES){
 			cout<<"NO EMPTY FRAME. choosing victim and releasing frame"<<endl;
-			word_t pageToEvict;
-			word_t frameOfPageToEvict;
-			getPageToEvict(pageToEvict,frameOfPageToEvict);
-			PMevict(frameOfPageToEvict,pageToEvict);
-			//unlink from table
-			PMwrite(pageToEvict,0);
 
-			emptyFrame = frameOfPageToEvict;
+			getPageToEvict(emptyFrame,table2FrameNumber);
+
 		}
 		//restore page and link to table
 		PMrestore(emptyFrame, pageNumber);
-		*/
+
 		pageFrameNumber = emptyFrame;
 
 		PMwrite(table2Address+table2toPageIndex,pageFrameNumber);

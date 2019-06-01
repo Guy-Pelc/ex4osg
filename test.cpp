@@ -11,6 +11,13 @@ using namespace std;
 #include <cassert>
 
 //test getMaxUsedFrame
+void test(){
+	VMwrite(0,10);
+	VMwrite(5,5);
+	VMwrite(0,10);
+	VMwrite(3,33);
+
+}
 void test11(){
 	VMwrite(0,13);
 	printPhysical();
@@ -25,7 +32,7 @@ void test8(){
 	printPhysical();
 }
 
-void test(){
+void test112(){
 	for (int i=0;i<VIRTUAL_MEMORY_SIZE;++i){
 	VMwrite(i,i);
 	}
@@ -60,12 +67,14 @@ void test6(){
 
 
 //tests getPageToEvict
-void test5(){
-	VMwrite(0,13);
-	word_t pageToEvict;
-	word_t frameOfPageToEvict;
-	getPageToEvict(pageToEvict,frameOfPageToEvict);
-}
+// void test5(){
+// 	VMwrite(0,13);
+// 	word_t addrToPtr;
+// 	word_t pageToEvict;
+// 	word_t frameOfPageToEvict;
+// 	getPageToEvict(	pageToEvict,frameOfPageToEvict,
+// 					addrToPtr);
+// }
 //tests getMaxUsedFrame
 void test4(){
 	VMwrite(0,13);

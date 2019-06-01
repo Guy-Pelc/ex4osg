@@ -16,7 +16,7 @@ typedef int word_t;
 
 
 // number of bits in a physical address
-#define PHYSICAL_ADDRESS_WIDTH 4
+#define PHYSICAL_ADDRESS_WIDTH 3
 // RAM size in words
 #define RAM_SIZE (1LL << PHYSICAL_ADDRESS_WIDTH)
 
