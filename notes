@@ -1,0 +1,9 @@
+notes
+
+-stuff to check:
+
+do i need to check corner case vm size == offset size? then table depth is 0 and then what...?
+
+---------------------
+
+
