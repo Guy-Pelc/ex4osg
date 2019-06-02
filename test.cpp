@@ -13,7 +13,47 @@ using namespace std;
 #include <cmath>
 #include <algorithm>
 
+
 void test(){
+	// test for any depth code, 
+	//assume all pages and tables are in PM
+	//VW = 4
+	//PW = 4
+	//OFF = 1
+	//-> depth = 1
+	word_t arr[26] ={1,8,
+					2,5,
+					3,4,
+					0,0,
+					0,0,
+					6,7,
+					0,0,
+					0,0,
+					9,12,
+					10,11,
+					0,0,
+					0,0,
+					13,14};
+					
+	fillPM(arr,26);
+
+	for (int i=0;i<VIRTUAL_MEMORY_SIZE;++i){
+		VMwrite(i,i);
+	}
+}
+
+void test23(){
+	//depth 2 irregular table sizes, infinite #frames
+	//VW = 5
+	//offset = 2
+	//PW = 6 (only 10 needed)
+	
+	for (int i=0;i<VIRTUAL_MEMORY_SIZE;++i){
+		VMwrite(i,i);
+	}
+}
+/*
+void test22(){
 	//complete test depth 2
 
 	//VW = 3
@@ -31,7 +71,7 @@ void test(){
 	}
 
 }
-
+*/
 void test21(){
 	//testing page to evict empty frame
 	//depth 2

@@ -6,6 +6,36 @@
 #include <algorithm>
 using namespace std;
 
+
+
+//general depth version
+//assumes all tables and pages are loaded in ram.
+
+int splitAddress(uint64_t virtualAddress,uint64_t* pArr){
+	for (int i = TABLES_DEPTH;i>=0;--i){
+		pArr[i] = virtualAddress % PAGE_SIZE;
+		virtualAddress = virtualAddress / PAGE_SIZE;
+		cout<<"pArr["<<i<<"]="<<pArr[i]<<endl;
+	}
+	return 0;
+}
+int VMtranslateAddress(uint64_t virtualAddress, uint64_t &physicalAddress){
+	cout<<"tablesDepth="<<TABLES_DEPTH<<endl;
+	uint64_t pArr[TABLES_DEPTH+1] = {0};
+	splitAddress(virtualAddress, pArr);
+	word_t t=0;
+	for (int i=0;i<TABLES_DEPTH;++i){
+		cout<<"t"<<i<<"="<<t<<endl;
+		PMread(t*PAGE_SIZE+pArr[i],&t);
+
+	}
+	cout<<"t"<<TABLES_DEPTH<<"="<<t<<endl;
+
+	physicalAddress = t*PAGE_SIZE+pArr[TABLES_DEPTH]; 
+	cout<<"physicalAddress="<<physicalAddress<<endl;
+	return 0;
+}
+
 void fillPM(word_t* arr,int len){
 	for (int i=0;i<len;++i){
 		PMwrite(i,arr[i]); 
@@ -166,7 +196,6 @@ int getPageToEvict(	word_t &emptyFrame,word_t &protectedTableFrameNumber,word_t 
 	return 0;
 }
 
-//fix for depth 2!!
 word_t getMaxUsedFrame(){
 	cout<<"getMaxUsedFrame..."<<endl;
 	word_t curTableAddr = 0;
@@ -201,88 +230,6 @@ word_t getMaxUsedFrame(){
 	return maxFrame;
 }
 
-
-int VMtranslateAddress(uint64_t virtualAddress,uint64_t *physicalAddress){
-	cout<<"VMtranslateAddress "<<virtualAddress<<"..."<<endl;
-
-
-	//split offset and page address:
-	//later split to (tableAddres)*,pageAddress,offset
-	word_t offset = virtualAddress % PAGE_SIZE;
-	word_t pageNumber = virtualAddress / PAGE_SIZE;
-	
-	word_t pageFrameNumber;
-	word_t emptyFrame;
-
-	word_t table2toPageIndex = pageNumber % PAGE_SIZE;
-	word_t table1to2Index = pageNumber / PAGE_SIZE;
-
-
-	word_t table2FrameNumber;
-	word_t table2Address;
-	//get table1to2FrameNumber:
-	if (TABLES_DEPTH == 2){
-		PMread(0+table1to2Index,&table2FrameNumber); // base of table1 is always zero
-		cout<<table1to2Index<<","<<table2FrameNumber<<endl;
-		if (table2FrameNumber == 0){
-			cout<<"PAGE FAULT - TABLE NOT IN RAM. searching for empty frame"<<endl;
-			emptyFrame =1 + getMaxUsedFrame();
-
-			if (emptyFrame==NUM_FRAMES){
-			cout<<"NO EMPTY FRAME. choosing victim and releasing frame"<<endl;
-
-			getPageToEvict(emptyFrame,table2FrameNumber, pageNumber);
-
-		}
-			// clear frame - only for tables.
-			clearTable(emptyFrame);
-
-			table2FrameNumber = emptyFrame;
-			PMwrite(table1to2Index,table2FrameNumber);
-		}
-
-		table2Address = frameToAddress(table2FrameNumber);
-
-	}
-	//depth == 1
-	else{
-		table2FrameNumber = 0;
-		table2Address = 0;
-		table2toPageIndex = pageNumber;
-	}
-	//get pageFrameNumber:
-	PMread(table2Address+table2toPageIndex,&pageFrameNumber); 
-	cout<<table2Address+table2toPageIndex<<","<<pageFrameNumber<<endl;
-
-	if (pageFrameNumber==0){
-		cout<<"PAGE FAULT - PAGE NOT IN RAM. searching for empty frame"<<endl;
-
-		emptyFrame =1 + getMaxUsedFrame();
-
-
-		if (emptyFrame==NUM_FRAMES){
-			cout<<"NO EMPTY FRAME. choosing victim and releasing frame"<<endl;
-
-			getPageToEvict(emptyFrame,table2FrameNumber, pageNumber);
-
-		}
-		//restore page and link to table
-		PMrestore(emptyFrame, pageNumber);
-
-		pageFrameNumber = emptyFrame;
-
-		PMwrite(table2Address+table2toPageIndex,pageFrameNumber);
-	}
-
-	word_t pageAddress = frameToAddress(pageFrameNumber);
-	
-	*physicalAddress = pageAddress+offset;
-
-
-	cout<<"..."<<*physicalAddress<<endl;
-	return 1;
-}
-
 /* reads a word from the given virtual address
  * and puts its content in *value.
  *
@@ -294,7 +241,7 @@ int VMread(uint64_t virtualAddress, word_t* value) {
 		cout<<"VMread "<<virtualAddress<<"..."<<endl;
 
 		uint64_t physicalAddress;
-		VMtranslateAddress(virtualAddress,&physicalAddress);
+		VMtranslateAddress(virtualAddress,physicalAddress);
 
 		PMread(physicalAddress,value); //writes value at page
 
@@ -313,7 +260,7 @@ int VMwrite(uint64_t virtualAddress, word_t value) {
 		cout<<"VMwrite "<<virtualAddress<<"..."<<endl;
 
 		uint64_t physicalAddress;
-		VMtranslateAddress(virtualAddress,&physicalAddress);
+		VMtranslateAddress(virtualAddress,physicalAddress);
 
 		PMwrite(physicalAddress,value); //writes value at page
 
