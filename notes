@@ -6,6 +6,10 @@ do i need to check corner case vm size == offset size? then table depth is 0 and
 
 
 corner case - physical address must have at least 2 frames. else what?
+
+-how to divide levels if number of bits does not fit exactly? for example: 
+VW=10, offset=4 
+lvl 1 -> 4 bits, lvl 2->2 bits or opposite?
 ---------------------
 
 

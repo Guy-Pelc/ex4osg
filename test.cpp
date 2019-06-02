@@ -10,8 +10,110 @@ using namespace std;
 #include <cstdio>
 #include <cassert>
 
-//test getMaxUsedFrame
+#include <cmath>
+#include <algorithm>
+
 void test(){
+	//complete test depth 2
+
+	//VW = 3
+	//OFFSET = 1
+	//PW = 3
+
+	for (int i=0;i<VIRTUAL_MEMORY_SIZE;++i){
+	VMwrite(i,i);
+	}
+
+	word_t val;
+	for (int i=0;i<VIRTUAL_MEMORY_SIZE;++i){
+	VMread(i,&val);
+	cout<<"VM["<<i<<"]="<<val<<endl;
+	}
+
+}
+
+void test21(){
+	//testing page to evict empty frame
+	//depth 2
+
+	//VW = 3
+	//OFFSET = 1
+	//PW = 3
+
+	word_t pm[8] = {1,0,2,3,0,1,2,3};
+	fillPM(pm,8);
+	VMwrite(4,4); //now table 0 in frame 1 has 0,0 values.
+
+	VMwrite(7,7); //should clear 1st frame that had table 0
+}
+
+void test20(){
+	//testing page to evict for multiple pages in frames 
+	//in depth 2
+
+	//VW = 3
+	//OFFSET = 1
+	//PW = 3
+	word_t pm[8] = {1,0,2,3,0,1,2,3};
+	fillPM(pm,8);
+
+	VMwrite(4,4);
+}
+
+void test15(){
+	//testing page to evict for multiple pages in frames 
+	//in depth 1
+
+	//VW = 4
+	//offset = 2
+	//PW = 4
+	//=>depth = 2
+
+	VMwrite(0,10);
+	VMwrite(4,22);
+	VMwrite(8,33);
+	
+	// printPhysical();
+	VMwrite(12,44);
+	// printPhysical();
+}
+
+void test18(){
+	word_t a = 1;
+	word_t b = 2;
+	cout<<min(word_t(NUM_PAGES)-abs((a-b)),a-b)<<endl;
+}//testing isReplacePageToEvict
+void test16(){
+	word_t pageNumber = 3;
+	word_t p1 = 1;
+	word_t p2 = 2;
+	cout<<isReplacePageToEvict(pageNumber,p1,p2)<<endl;
+}
+
+
+void test14(){
+
+	PMwrite(0,1);
+	PMwrite(1,0);
+	PMwrite(2,2);
+	PMwrite(3,3);
+	PMwrite(4,0);
+	PMwrite(5,1);
+	PMwrite(6,2);
+	PMwrite(7,3);
+
+	printPhysical();
+
+	VMwrite(4,4);
+}
+void test13(){
+	for (int i=0;i<VIRTUAL_MEMORY_SIZE;++i){
+	VMwrite(i,i);
+	}
+}
+
+//test getMaxUsedFrame
+void test12(){
 	VMwrite(0,10);
 	VMwrite(5,5);
 	VMwrite(0,10);
