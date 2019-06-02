@@ -10,7 +10,24 @@ using namespace std;
 
 //general depth version
 //assumes all tables and pages are loaded in ram.
+word_t getMaxFrame(word_t t, int depth){
+	word_t m;
+	word_t f;
 
+	for (int i=0;i<PAGE_SIZE;++i){
+		PMread(t*PAGE_SIZE+i,&f);
+		m = max(t,f);
+			if (f!=0 && depth>1){
+				m = max(m,getMaxFrame(f, depth-1));
+			}
+	}
+	return m;
+}
+word_t getMaxFrame(){
+	word_t m = getMaxFrame(0, TABLES_DEPTH);
+	cout<<"max frame: "<<m<<endl;
+	return m;
+}
 int splitAddress(uint64_t virtualAddress,uint64_t* pArr){
 	for (int i = TABLES_DEPTH;i>=0;--i){
 		pArr[i] = virtualAddress % PAGE_SIZE;
@@ -194,40 +211,6 @@ int getPageToEvict(	word_t &emptyFrame,word_t &protectedTableFrameNumber,word_t 
 
 	cout<<"..."<<pageToEvict<<" at frame "<<pageToEvictFrameNumber<<endl;
 	return 0;
-}
-
-word_t getMaxUsedFrame(){
-	cout<<"getMaxUsedFrame..."<<endl;
-	word_t curTableAddr = 0;
-	word_t maxFrame = 0;
-	word_t compFrame;
-	word_t compFramelvl2;
-	if (TABLES_DEPTH == 2){
-		//first depth table
-		for (int i=0;i<PAGE_SIZE;++i){
-			PMread(curTableAddr+i,&compFrame);
-			if (compFrame!=0){
-				if(compFrame>maxFrame){maxFrame=compFrame;}	
-				// second depth table	
-				for (int j = 0;j<PAGE_SIZE;++j){
-					PMread(frameToAddress(compFrame)+j,&compFramelvl2);
-					if(compFramelvl2>maxFrame){maxFrame=compFramelvl2;}		
-				}
-			}
-			
-		}
-	}
-	// tables depth == 1
-	else {
-		compFrame = 0;
-		for (int j = 0;j<PAGE_SIZE;++j){
-					PMread(frameToAddress(compFrame)+j,&compFramelvl2);
-					if(compFramelvl2>maxFrame){maxFrame=compFramelvl2;}		
-				}
-	}
-	
-	cout<<"..."<<maxFrame<<endl;
-	return maxFrame;
 }
 
 /* reads a word from the given virtual address

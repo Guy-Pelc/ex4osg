@@ -2,11 +2,13 @@
 
 #include "MemoryConstants.h"
 
+word_t getMaxFrame();
+
 bool isReplacePageToEvict(	word_t &page_swapped_in,word_t &p1,
 							word_t &p2);
 
 void fillPM(word_t* arr,int len);
-word_t getMaxUsedFrame();
+// word_t getMaxUsedFrame();
 int getPageToEvict(word_t &pageToEvict, word_t &pageFrameNumber);
 void printPhysical();
 /*

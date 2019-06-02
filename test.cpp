@@ -37,9 +37,12 @@ void test(){
 					
 	fillPM(arr,26);
 
+
 	for (int i=0;i<VIRTUAL_MEMORY_SIZE;++i){
 		VMwrite(i,i);
 	}
+	getMaxFrame();
+	// cout<<"max frame: "<<getMaxFrame()<<endl;
 }
 
 void test23(){
@@ -169,7 +172,7 @@ void test8(){
 	// PMwrite()
 	PMwrite(3,2);
 	PMwrite(5,13);
-	cout<<getMaxUsedFrame()<<endl;
+	// cout<<getMaxUsedFrame()<<endl;
 
 	printPhysical();
 }
