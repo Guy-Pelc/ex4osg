@@ -31,7 +31,7 @@ void PMread(uint64_t physicalAddress, word_t* value) {
 void PMwrite(uint64_t physicalAddress, word_t value) {
     if (RAM.empty())
         initialize();
-    cout<<"pm write "<<physicalAddress<<","<<value<<endl;
+    cout<<"pm write addr,val="<<physicalAddress<<","<<value<<endl;
     assert(physicalAddress < RAM_SIZE);
 
     RAM[physicalAddress / PAGE_SIZE][physicalAddress
@@ -39,7 +39,7 @@ void PMwrite(uint64_t physicalAddress, word_t value) {
 }
 
 void PMevict(uint64_t frameIndex, uint64_t evictedPageIndex) {
-    cout<< "pm evict "<<frameIndex<<","<<evictedPageIndex<<endl;
+    cout<< "pm evict f,p="<<frameIndex<<","<<evictedPageIndex<<endl;
     if (RAM.empty())
         initialize();
 

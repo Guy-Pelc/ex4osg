@@ -11,40 +11,25 @@ using namespace std;
 
 //general depth version
 //assumes all tables and pages are loaded in ram.
-word_t getMaxFrame(word_t t, int depth){
+word_t _getMaxFrame(word_t t, int depth){
 	word_t m=t;
 	word_t f;
 
 	for (int i=0;i<PAGE_SIZE;++i){
 		PMread(t*PAGE_SIZE+i,&f);
 		m = max(m,f);
-		cout<<"m["<<i<<"]="<<m<<endl;
+		// cout<<"m["<<i<<"]="<<m<<endl;
 			if (f!=0 && depth>1){
-				cout<<"here"<<endl;
-				m = max(m,getMaxFrame(f, depth-1));
+				// cout<<"here"<<endl;
+				m = max(m,_getMaxFrame(f, depth-1));
 			}
 	}
-	cout<<"m="<<m<<endl;
-	return m;
-}
-word_t getMaxFrame1(word_t t, int depth){
-	word_t m;
-	word_t f;
-
-	for (int i=0;i<PAGE_SIZE;++i){
-		PMread(t*PAGE_SIZE+i,&f);
-		m = max(t,f);
-		cout<<"m["<<i<<"]="<<m<<endl;
-			if (f!=0 && depth>1){
-				cout<<"here"<<endl;
-				m = max(m,getMaxFrame(f, depth-1));
-			}
-	}
-	cout<<"m="<<m<<endl;
+	// cout<<"m="<<m<<endl;
 	return m;
 }
 word_t getMaxFrame(){
-	word_t m = getMaxFrame(0, TABLES_DEPTH);
+	cout<<"getMaxFrame"<<endl;
+	word_t m = _getMaxFrame(0, TABLES_DEPTH);
 	cout<<"max frame: "<<m<<endl;
 	return m;
 }
@@ -56,6 +41,76 @@ int splitAddress(uint64_t virtualAddress,uint64_t* pArr){
 	}
 	return 0;
 }
+
+word_t _evictFrame(	word_t pageToInsert,
+					word_t &pToEvict,
+					word_t &fToEvict,
+					word_t &ptrToRemove,
+					word_t t,
+					word_t pBase,
+					int depth){
+	word_t f;
+	word_t p;
+
+	for (int i=0;i<PAGE_SIZE;++i){
+		PMread(t*PAGE_SIZE+i,&f);
+		if (depth>1){
+			//t points to tables
+			if (f!=0){
+				// table exists at frame f
+				_evictFrame(pageToInsert,
+							pToEvict,
+							fToEvict,
+							ptrToRemove,
+							f,
+							i*pow(PAGE_SIZE,depth-1),
+							depth-1);
+			}
+		}
+		//else depth==1
+		else{
+			// t points to pages
+			p = pBase + i;
+			if (f!=0){
+				// page exists at frame f
+				//check if to replace
+				if (isReplacePageToEvict(pageToInsert,pToEvict,p)){
+					pToEvict = p;
+					fToEvict = f;
+					ptrToRemove = t*PAGE_SIZE+i;
+					cout<<"replaced page to evict."<<endl;
+					cout<<"f,p,ptr="<<f<<","<<p<<","<<ptrToRemove<<endl;
+				}
+			}
+		}
+
+
+	}
+	return 0;
+}
+/** returns index of evicted frame*/
+word_t evictFrame(word_t pageToInsert){
+	word_t pToEvict=-1;
+	word_t fToEvict=-1;
+	word_t ptrToRemove=-1;
+
+	_evictFrame	(
+				pageToInsert,
+				pToEvict,
+				fToEvict,
+				ptrToRemove,
+				0,
+				0,
+				TABLES_DEPTH
+				);
+	// assumes evicted is page and not table!
+	PMevict(fToEvict,pToEvict);
+	
+	//unlink from table
+	PMwrite(ptrToRemove,0);
+	return fToEvict;
+}
+
 // pArr[i] = offset of ith table (0..n-1)
 // pArr[n] = offset of value in page
 // pArr[n-1] = offset of page in final table
@@ -70,7 +125,7 @@ int VMtranslateAddress(uint64_t virtualAddress, uint64_t &physicalAddress){
 	word_t f;
 
 	for (int i=0;i<n;++i){
-		cout<<"t"<<i<<"="<<t<<endl;
+		cout<<"t["<<i<<"]="<<t<<endl;
 		//(i=0..n-2) set f to frame of ith table 
 		//(i=n-1) set f to frame of page
 		PMread(t*PAGE_SIZE+pArr[i],&f);
@@ -81,7 +136,7 @@ int VMtranslateAddress(uint64_t virtualAddress, uint64_t &physicalAddress){
 			// no empty frames
 			if (f==NUM_FRAMES){
 				cout<<"need to evict!"<<endl;
-				assert(false);
+				f = evictFrame(pageIndex);
 			}
 			// link frame to previous table
 			PMwrite(t*PAGE_SIZE+pArr[i],f);
@@ -151,7 +206,7 @@ bool isReplacePageToEvict(	word_t &page_swapped_in,word_t &p1,
 							word_t &p2){
 	cout<<"isReplacePageToEvict"<<endl;
 	//in case there is not yet a candidate
-	if (p1 == -1){cout<<"true"<<endl; return true;}
+	if (p1 == -1){cout<<"set initial p="<<p2<<endl; return true;}
 
 	word_t p1val = min(	word_t(NUM_PAGES)-abs(page_swapped_in-p1),
 						abs(page_swapped_in-p1)); 
@@ -159,6 +214,8 @@ bool isReplacePageToEvict(	word_t &page_swapped_in,word_t &p1,
 						abs(page_swapped_in-p2)); 
 	cout<<"p1,p2,p,NUM_PAGES="<<p1<<","<<p2<<","<<page_swapped_in<<","<<NUM_PAGES<<endl;
 	cout<<"p1val,p2val="<<p1val<<","<<p2val<<endl;
+	if (p1val<p2val){cout<<"replacing..."<<endl;}
+	else{cout<<"not replacing"<<endl;}
 	return p1val<p2val;
 }
 

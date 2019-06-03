@@ -2,6 +2,7 @@
 
 #include "MemoryConstants.h"
 
+word_t evictFrame(word_t pageToInsert);
 word_t getMaxFrame();
 void clearTable(uint64_t frameIndex); 
 bool isReplacePageToEvict(	word_t &page_swapped_in,word_t &p1,

@@ -14,18 +14,36 @@ using namespace std;
 #include <algorithm>
 
 
-
-
 void test(){
+	// depth n
+	// tests evicting pages (not frames)
+	// assume single candidate
+	// VW = 3
+	// PW = 3
+	// OFF = 1
+
+	word_t arr[8] =
+				{1,0,
+				2,3,
+				100,101,
+				102,103};
+					
+	fillPM(arr,8);
+	// for (int i=0;i<VIRTUAL_MEMORY_SIZE/2;++i){
+	// 	VMwrite(i,100+i);
+	// }
+	VMwrite(4,104);
+	VMwrite(7,107);
+
+}
+void test11(){
 	// depth n
 	// tests creating new pages.
 	// assume tables are in place and infinite PM
-	// VW = 2
-	// PW = 3
+	// VW = n
+	// PW = n+1
 	// OFF = 1
-	// word_t arr[4] = {1,0,10,11};
-	// fillPM(arr,4);
-	// getMaxFrame();
+
 	for (int i=0;i<VIRTUAL_MEMORY_SIZE;++i){
 		VMwrite(i,100+i);
 	}
