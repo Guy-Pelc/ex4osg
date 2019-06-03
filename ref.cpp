@@ -1,3 +1,107 @@
+// old version for evict page
+int getPageToEvict(	word_t &emptyFrame,word_t &protectedTableFrameNumber,word_t &pageToInsertNumber){
+//	cout<<"getPageToEvict..."<<endl;
+	printPhysical();
+
+	bool isEmptyTable;
+
+	word_t pageToEvictFrameNumber;
+	word_t addressToPtrOfPageToEvict;
+	word_t pageToEvict = -1;
+	
+	word_t table2FrameNumber;
+	word_t pageFrameNumber;
+	word_t table2Address;
+	
+	if (TABLES_DEPTH==2){
+		//ASSUMES ONLY ROOM FOR ONE PAGE IN MEMORY
+		//first level
+		for (int i = 0; i<PAGE_SIZE; ++i){
+			PMread(i,&table2FrameNumber);
+			if (table2FrameNumber != 0) {
+				isEmptyTable = true;
+
+				//second level:
+				for (int j =0; j<PAGE_SIZE;++j){
+
+					table2Address = frameToAddress(table2FrameNumber);
+					PMread(j+table2Address,&pageFrameNumber);
+					//exists frame with page:
+					if (pageFrameNumber!=0){
+					word_t candidatePageToEvict = i*PAGE_SIZE+j;
+//					cout<<"found page to evict:"<<candidatePageToEvict<<endl;
+					isEmptyTable = false;
+//					cout<<"comparing with current page to evict..."<<endl;
+
+					if (isReplacePageToEvict(pageToInsertNumber,pageToEvict,candidatePageToEvict)){
+//						cout<<"switching page to evict"<<endl;
+						addressToPtrOfPageToEvict = j+table2Address;
+						pageToEvictFrameNumber = pageFrameNumber;
+						pageToEvict = candidatePageToEvict;
+					}
+				}
+				}
+				//evict table if empty (prefer over evict page)
+				if (isEmptyTable==true){
+					if (table2FrameNumber == protectedTableFrameNumber){
+//						cout<<"move on"<<endl;
+						continue;
+					}
+//					cout<<"protectedTableFrameNumber:"<<protectedTableFrameNumber<<endl;
+//					cout<<"table2FrameNumber:"<<table2FrameNumber<<endl;
+					// cout<<"here"<<endl;
+					//unlink table:
+//					cout<<"found empty table"<<endl;
+					PMwrite(i,0);
+					// set return value
+					emptyFrame = table2FrameNumber;
+					
+					return 0;
+				}
+			}
+		}
+	}
+	//depth = 1
+	else{
+		table2FrameNumber = 0;
+		int i = 0;
+	//second level:
+			for (int j =0; j<PAGE_SIZE;++j){
+
+				table2Address = frameToAddress(table2FrameNumber);
+				PMread(j+table2Address,&pageFrameNumber);
+				//exists frame with page:
+				if (pageFrameNumber!=0){
+					word_t candidatePageToEvict = i*PAGE_SIZE+j;
+//					cout<<"found page to evict:"<<candidatePageToEvict<<endl;
+					isEmptyTable = false;
+//					cout<<"comparing with current page to evict..."<<endl;
+
+					if (isReplacePageToEvict(pageToInsertNumber,pageToEvict,candidatePageToEvict)){
+//						cout<<"switching page to evict"<<endl;
+						addressToPtrOfPageToEvict = j+table2Address;
+						pageToEvictFrameNumber = pageFrameNumber;
+						pageToEvict = candidatePageToEvict;
+					}
+				}
+			}
+	}
+
+	PMevict(pageToEvictFrameNumber,pageToEvict);
+	//unlink from table
+	PMwrite(addressToPtrOfPageToEvict,0);
+
+	emptyFrame = pageToEvictFrameNumber;
+	if (pageToEvict==-1){
+		cout<<"error! no page in ram"<<endl;
+		return -1;
+	}
+				// cout<<"pageFrameNumber:"<<pageFrameNumber<<endl;			
+
+	cout<<"..."<<pageToEvict<<" at frame "<<pageToEvictFrameNumber<<endl;
+	return 0;
+}
+
 
 //old version for depths 1,2
 word_t getMaxUsedFrame(){

@@ -2,7 +2,11 @@
 
 #include <cstdio>
 #include <cassert>
-
+/**
+OFF=4
+PW=10
+VW=20
+*/
 int main(int argc, char **argv) {
     VMinitialize();
     for (uint64_t i = 0; i < (2 * NUM_FRAMES); ++i) {

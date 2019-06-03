@@ -13,8 +13,54 @@ using namespace std;
 #include <cmath>
 #include <algorithm>
 
+int test() {
+	//make sure VW >= 1+PW
+	//make sure PW-OFF >= depth
+    VMinitialize();
+    for (uint64_t i = 0; i < (2 * NUM_FRAMES); ++i) {
+        printf("writing to %llu\n", (long long int) i);
+        VMwrite(5* i * PAGE_SIZE, i);
+    }
 
-void test(){
+    for (uint64_t i = 0; i < (2 * NUM_FRAMES); ++i) {
+        word_t value;
+        VMread(5* i * PAGE_SIZE, &value);
+        printf("reading from %llu %d\n", (long long int) i, value);
+        assert(uint64_t(value) == i);
+    }
+    printf("success\n");
+
+    return 0;
+}
+void test5(){
+	// depth n
+	// tests all with no assumptions
+	// VW = 3
+	// PW = 3
+	// OFF = 1
+
+	// word_t arr[8] =
+	// 		{1,0,
+	// 		2,3,
+	// 		100,101,
+	// 		102,103};
+					
+	// fillPM(arr,8);
+
+	// VMwrite(4,104);
+	// VMwrite(7,107);
+	for (int i=0;i<VIRTUAL_MEMORY_SIZE;++i){
+		VMwrite(i,100+i);
+	}
+
+	word_t val;
+	for (int i=0;i<VIRTUAL_MEMORY_SIZE;++i){
+		VMread(i,&val);
+		assert(val==100+i);
+	}
+	cout<<"success!"<<endl;
+}
+void test4(){
 	// depth n
 	// tests evicting pages (not frames)
 	// assume single candidate
@@ -23,16 +69,16 @@ void test(){
 	// OFF = 1
 
 	word_t arr[8] =
-				{1,0,
-				2,3,
-				100,101,
-				102,103};
+				{1,2,
+				0,0,
+				3,0,
+				104,105};
 					
 	fillPM(arr,8);
 	// for (int i=0;i<VIRTUAL_MEMORY_SIZE/2;++i){
 	// 	VMwrite(i,100+i);
 	// }
-	VMwrite(4,104);
+	// VMwrite(4,104);
 	VMwrite(7,107);
 
 }
