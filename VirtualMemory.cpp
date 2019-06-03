@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cmath>
 #include <algorithm>
+#include <cassert>
 using namespace std;
 
 
@@ -11,16 +12,35 @@ using namespace std;
 //general depth version
 //assumes all tables and pages are loaded in ram.
 word_t getMaxFrame(word_t t, int depth){
+	word_t m=t;
+	word_t f;
+
+	for (int i=0;i<PAGE_SIZE;++i){
+		PMread(t*PAGE_SIZE+i,&f);
+		m = max(m,f);
+		cout<<"m["<<i<<"]="<<m<<endl;
+			if (f!=0 && depth>1){
+				cout<<"here"<<endl;
+				m = max(m,getMaxFrame(f, depth-1));
+			}
+	}
+	cout<<"m="<<m<<endl;
+	return m;
+}
+word_t getMaxFrame1(word_t t, int depth){
 	word_t m;
 	word_t f;
 
 	for (int i=0;i<PAGE_SIZE;++i){
 		PMread(t*PAGE_SIZE+i,&f);
 		m = max(t,f);
+		cout<<"m["<<i<<"]="<<m<<endl;
 			if (f!=0 && depth>1){
+				cout<<"here"<<endl;
 				m = max(m,getMaxFrame(f, depth-1));
 			}
 	}
+	cout<<"m="<<m<<endl;
 	return m;
 }
 word_t getMaxFrame(){
@@ -36,19 +56,52 @@ int splitAddress(uint64_t virtualAddress,uint64_t* pArr){
 	}
 	return 0;
 }
+// pArr[i] = offset of ith table (0..n-1)
+// pArr[n] = offset of value in page
+// pArr[n-1] = offset of page in final table
 int VMtranslateAddress(uint64_t virtualAddress, uint64_t &physicalAddress){
 	cout<<"tablesDepth="<<TABLES_DEPTH<<endl;
-	uint64_t pArr[TABLES_DEPTH+1] = {0};
+	word_t n = TABLES_DEPTH;
+	uint64_t pArr[n+1] = {0};
+	word_t pageIndex = virtualAddress/PAGE_SIZE;
 	splitAddress(virtualAddress, pArr);
-	word_t t=0;
-	for (int i=0;i<TABLES_DEPTH;++i){
-		cout<<"t"<<i<<"="<<t<<endl;
-		PMread(t*PAGE_SIZE+pArr[i],&t);
 
+	word_t t=0;
+	word_t f;
+
+	for (int i=0;i<n;++i){
+		cout<<"t"<<i<<"="<<t<<endl;
+		//(i=0..n-2) set f to frame of ith table 
+		//(i=n-1) set f to frame of page
+		PMread(t*PAGE_SIZE+pArr[i],&f);
+		// if page/frame doesn't exist
+		if (f==0){
+			cout<<"page/frame doesn't exist in RAM"<<endl;
+			f = getMaxFrame()+1;
+			// no empty frames
+			if (f==NUM_FRAMES){
+				cout<<"need to evict!"<<endl;
+				assert(false);
+			}
+			// link frame to previous table
+			PMwrite(t*PAGE_SIZE+pArr[i],f);
+			//(i=0..n-2) t is frame of table: clear table
+			if (i < n-1){
+				clearTable(f);
+			}
+			// (i=n-1) t is frame of page:  restore page from disk 
+			else{
+				PMrestore(f,pageIndex);	
+			}
+		}
+		//(i=0..n-2) set next table to frame.
+		//(i=n-1) t won't be used. 
+		t=f;
 	}
+
 	cout<<"t"<<TABLES_DEPTH<<"="<<t<<endl;
 
-	physicalAddress = t*PAGE_SIZE+pArr[TABLES_DEPTH]; 
+	physicalAddress = f*PAGE_SIZE+pArr[n]; 
 	cout<<"physicalAddress="<<physicalAddress<<endl;
 	return 0;
 }

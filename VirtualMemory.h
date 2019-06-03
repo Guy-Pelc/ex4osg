@@ -3,7 +3,7 @@
 #include "MemoryConstants.h"
 
 word_t getMaxFrame();
-
+void clearTable(uint64_t frameIndex); 
 bool isReplacePageToEvict(	word_t &page_swapped_in,word_t &p1,
 							word_t &p2);
 
