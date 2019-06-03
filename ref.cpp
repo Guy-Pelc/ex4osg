@@ -1,3 +1,23 @@
+//debugging functions;
+void fillPM(word_t* arr,int len){
+	for (int i=0;i<len;++i){
+		PMwrite(i,arr[i]); 
+	}
+//	cout<<endl;
+	printPhysical();
+}
+
+void printPhysical(){
+	if (!DEBUG){return;}
+	word_t val;
+	for (uint64_t i=0; i<RAM_SIZE; ++i){
+			PMread(i,&val);
+			// cout<<"RAM["<<i<<"]="<<val<<endl;}
+			// cout<<endl;
+		}
+	}
+
+
 // old version for evict page
 int getPageToEvict(	word_t &emptyFrame,word_t &protectedTableFrameNumber,word_t &pageToInsertNumber){
 //	cout<<"getPageToEvict..."<<endl;

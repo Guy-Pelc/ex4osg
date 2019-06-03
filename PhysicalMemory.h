@@ -2,8 +2,6 @@
 
 #include "MemoryConstants.h"
 
-
-
 /*
  * reads an integer from the given physical address and puts it in 'value'
  */

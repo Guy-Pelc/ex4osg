@@ -1,14 +1,45 @@
 #include "VirtualMemory.h"
 #include "PhysicalMemory.h"
 
-#include <iostream>
+// #include <iostream>
 #include <cmath>
 #include <algorithm>
 #include <cassert>
 using namespace std;
 
+#define DEBUG 1
 
+void clearTable(uint64_t frameIndex) {
+//	cout<<"clearTable: "<<frameIndex<<endl;
+    for (uint64_t i = 0; i < PAGE_SIZE; ++i) {
+        PMwrite(frameIndex * PAGE_SIZE + i, 0);
+    }
+}
 
+//return true if p2 is more 'suitable' for eviction than p1
+bool isReplacePageToEvict(	word_t &page_swapped_in,word_t &p1,
+							word_t &p2){
+//	cout<<"isReplacePageToEvict"<<endl;
+	//in case there is not yet a candidate
+	if (p1 == -1){
+//		cout<<"set initial p="<<p2<<endl; 
+		return true;
+	}
+
+	word_t p1val = min(	word_t(NUM_PAGES)-abs(page_swapped_in-p1),
+						abs(page_swapped_in-p1)); 
+	word_t p2val = min(	word_t(NUM_PAGES)-abs(page_swapped_in-p2),
+						abs(page_swapped_in-p2)); 
+//	cout<<"p1,p2,p,NUM_PAGES="<<p1<<","<<p2<<","<<page_swapped_in<<","<<NUM_PAGES<<endl;
+//	cout<<"p1val,p2val="<<p1val<<","<<p2val<<endl;
+	if (p1val<p2val){
+//		cout<<"replacing..."<<endl;
+	}
+	else{
+//		cout<<"not replacing"<<endl;
+	}
+	return p1val<p2val;
+}
 //general depth version
 //assumes all tables and pages are loaded in ram.
 word_t _getMaxFrame(word_t t, int depth){
@@ -173,7 +204,7 @@ int VMtranslateAddress(uint64_t virtualAddress, uint64_t &physicalAddress){
 			else{
 				PMrestore(f,pageIndex);	
 			}
-			printPhysical();
+			// printPhysical();
 		}
 		//(i=0..n-2) set next table to frame.
 		//(i=n-1) t won't be used. 
@@ -187,39 +218,7 @@ int VMtranslateAddress(uint64_t virtualAddress, uint64_t &physicalAddress){
 	return 0;
 }
 
-void fillPM(word_t* arr,int len){
-	for (int i=0;i<len;++i){
-		PMwrite(i,arr[i]); 
-	}
-	cout<<endl;
-	printPhysical();
-}
 
-void printPhysical(){
-	return;
-	/**
-	word_t val;
-	for (uint64_t i=0; i<RAM_SIZE; ++i){
-			PMread(i,&val);
-			cout<<"RAM["<<i<<"]="<<val<<endl;}
-	cout<<endl;
-	*/
-	}
-
-//translates frame to base address of frame.
-//assumes depth is 1
-word_t frameToAddress(word_t frame){
-	// cout<<"frame "<<frame<<" to base page address ";
-	word_t basePageAddress = frame*PAGE_SIZE;
-	// cout<<basePageAddress<<endl;
-	return basePageAddress;
-}
-void clearTable(uint64_t frameIndex) {
-//	cout<<"clearTable: "<<frameIndex<<endl;
-    for (uint64_t i = 0; i < PAGE_SIZE; ++i) {
-        PMwrite(frameIndex * PAGE_SIZE + i, 0);
-    }
-}
 /*
  * Initialize the virtual memory
  */
@@ -229,30 +228,7 @@ void VMinitialize() {
 //   cout<<"end init\n"<<endl;
 }
 
-//return true if p2 is more 'suitable' for eviction than p1
-bool isReplacePageToEvict(	word_t &page_swapped_in,word_t &p1,
-							word_t &p2){
-//	cout<<"isReplacePageToEvict"<<endl;
-	//in case there is not yet a candidate
-	if (p1 == -1){
-//		cout<<"set initial p="<<p2<<endl; 
-		return true;
-	}
 
-	word_t p1val = min(	word_t(NUM_PAGES)-abs(page_swapped_in-p1),
-						abs(page_swapped_in-p1)); 
-	word_t p2val = min(	word_t(NUM_PAGES)-abs(page_swapped_in-p2),
-						abs(page_swapped_in-p2)); 
-//	cout<<"p1,p2,p,NUM_PAGES="<<p1<<","<<p2<<","<<page_swapped_in<<","<<NUM_PAGES<<endl;
-//	cout<<"p1val,p2val="<<p1val<<","<<p2val<<endl;
-	if (p1val<p2val){
-//		cout<<"replacing..."<<endl;
-	}
-	else{
-//		cout<<"not replacing"<<endl;
-	}
-	return p1val<p2val;
-}
 
 
 
@@ -301,7 +277,7 @@ int VMwrite(uint64_t virtualAddress, word_t value) {
 
 //		cout<<"..."<<value<<endl<<endl;
 
-		printPhysical();
+		// printPhysical();
 
     return 1;
 }

@@ -1,6 +1,5 @@
 
 #include "VirtualMemory.h"
-#include "PhysicalMemory.h"
 
 #include "MemoryConstants.h"
 
@@ -12,8 +11,13 @@ using namespace std;
 
 #include <cmath>
 #include <algorithm>
-
-int test() {
+void test(){
+	for (int i=0;i<VIRTUAL_MEMORY_SIZE;++i){
+		VMwrite(i,100+i);
+	}
+	cout<<"yes"<<endl;
+}
+int test6() {
 	//make sure VW >= 1+PW
 	//make sure PW-OFF >= depth
     VMinitialize();
